@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam dengan Frame 3x4 & Green Screen</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
+            text-align: center;
+        }
+
+        .frame {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 400px;
+            border: 5px solid red;
+            transform: translate(-50%, -50%);
+            box-sizing: border-box;
+        }
+
+        .preview-container {
+            display: none;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body class="d-flex flex-column align-items-center justify-content-center vh-100">
+    <div id="capture-section" class="video-container">
+        <select id="camera-select" class="form-select mb-2 w-50 mx-auto"></select>
+        <video id="video" autoplay class="w-100 rounded"></video>
+        <div class="frame"></div>
+        <input type="text" id="filename" class="form-control mt-3 w-50 mx-auto" placeholder="Nama file...">
+        <select id="background-select" class="form-select mt-2 w-50 mx-auto">
+            <option value="blue">Latar Belakang Biru</option>
+            <option value="red">Latar Belakang Merah</option>
+        </select>
+        <button id="capture" class="btn btn-primary mt-2">Ambil Foto</button>
+    </div>
+    <div id="preview-section" class="preview-container mt-3">
+        <img id="preview" class="img-thumbnail" alt="Preview Foto">
+        <div class="mt-3">
+            <button id="download" class="btn btn-success">Download Foto</button>
+            <button id="retry" class="btn btn-warning ms-2">Ulangi</button>
+        </div>
+    </div>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureButton = document.getElementById('capture');
+        const retryButton = document.getElementById('retry');
+        const preview = document.getElementById('preview');
+        const filenameInput = document.getElementById('filename');
+        const downloadButton = document.getElementById('download');
+        const captureSection = document.getElementById('capture-section');
+        const previewSection = document.getElementById('preview-section');
+        const cameraSelect = document.getElementById('camera-select');
+        const backgroundSelect = document.getElementById('background-select');
+
+        navigator.mediaDevices.enumerateDevices().then(devices => {
+            devices.filter(device => device.kind === 'videoinput').forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.text = device.label || `Kamera ${index + 1}`;
+                cameraSelect.appendChild(option);
+            });
+        });
+
+        function startCamera(deviceId) {
+            const constraints = {
+                video: deviceId ? { deviceId: { exact: deviceId } } : true
+            };
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.addEventListener('loadedmetadata', () => {
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                    });
+                })
+                .catch(err => console.error("Gagal mengakses webcam: ", err));
+        }
+
+        cameraSelect.addEventListener('change', () => {
+            startCamera(cameraSelect.value);
+        });
+
+        startCamera();
+
+        async function removeGreenScreen(image, bgColor) {
+            const net = await bodyPix.load();
+            const segmentation = await net.segmentPerson(image);
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            const color = bgColor === 'red' ? [255, 0, 0] : [0, 0, 255];
+
+            for (let i = 0; i < data.length; i += 4) {
+                if (segmentation.data[i / 4] === 0) {
+                    data[i] = color[0];
+                    data[i + 1] = color[1];
+                    data[i + 2] = color[2];
+                    data[i + 3] = 255;
+                }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        captureButton.addEventListener('click', async () => {
+            if (!filenameInput.value.trim()) {
+                alert("Harap masukkan nama file sebelum mengambil foto.");
+                return;
+            }
+
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            await removeGreenScreen(canvas, backgroundSelect.value);
+
+            const rectWidth = 300;
+            const rectHeight = 400;
+            const rectX = (canvas.width - rectWidth) / 2;
+            const rectY = (canvas.height - rectHeight) / 2;
+
+            const croppedCanvas = document.createElement('canvas');
+            croppedCanvas.width = rectWidth;
+            croppedCanvas.height = rectHeight;
+            const croppedContext = croppedCanvas.getContext('2d');
+
+            croppedContext.drawImage(
+                canvas,
+                rectX, rectY, rectWidth, rectHeight,
+                0, 0, rectWidth, rectHeight
+            );
+
+            const imageData = croppedCanvas.toDataURL('image/png');
+            preview.src = imageData;
+            captureSection.style.display = 'none';
+            previewSection.style.display = 'block';
+        });
+
+        retryButton.addEventListener('click', () => {
+            previewSection.style.display = 'none';
+            captureSection.style.display = 'block';
+        });
+
+        downloadButton.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.href = preview.src;
+            link.download = filenameInput.value.trim() + '.png';
+            link.click();
+
+            previewSection.style.display = 'none';
+            captureSection.style.display = 'block';
+            filenameInput.value = "";
+        });
+    </script>
+</body>
+
+</html>
