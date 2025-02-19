@@ -46,7 +46,7 @@ Berikut adalah tampilan dari aplikasi:
 ## Instalasi & Penggunaan Lokal
 1. Clone repositori ini:
    ```bash
-   git clone https://github.com/username/repo-webcam-frame.git
+   git clone https://github.com/Cantrik-art/project-kamera-kts.git
    ```
 2. Buka file `index.html` di browser.
 3. Pastikan browser memiliki izin untuk mengakses kamera.
