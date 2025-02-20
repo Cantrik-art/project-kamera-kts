@@ -1,7 +1,7 @@
 # Webcam Frame 3x4 dengan Green Screen
 
 Aplikasi ini adalah sebuah web berbasis HTML, JavaScript, dan Bootstrap 5 yang memungkinkan pengguna untuk mengambil foto dengan frame ukuran 3x4, memilih kamera yang digunakan, serta mengganti background secara otomatis dengan pilihan warna merah atau biru.
-
+!(https://cantrik-art.github.io/project-kamera-kts/greedscreen.html)
 ## Fitur Utama
 - Menampilkan video dari webcam dengan resolusi penuh.
 - Menampilkan frame 3x4 sebagai panduan pengambilan foto.
