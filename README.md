@@ -6,7 +6,7 @@ Aplikasi ini adalah sebuah web berbasis HTML, JavaScript, dan Bootstrap 5 yang m
 - Menampilkan video dari webcam dengan resolusi penuh.
 - Menampilkan frame 3x4 sebagai panduan pengambilan foto.
 - Memungkinkan pengguna memilih kamera yang ingin digunakan.
-- Menghapus background menggunakan teknologi machine learning (BodyPix) dan menggantinya dengan warna solid (merah atau biru)[Remove Background](https://cantrik-art.github.io/project-kamera-kts/greedscreen.html)
+- Menghapus background menggunakan teknologi machine learning (BodyPix) dan menggantinya dengan warna solid (merah atau biru). [Remove Background](https://cantrik-art.github.io/project-kamera-kts/greedscreen.html)
 - Menyediakan input untuk memasukkan nama file sebelum mengambil foto.
 - Menampilkan preview sebelum mendownload hasil foto.
 - Memungkinkan pengguna mengulang proses jika hasil tidak sesuai.
